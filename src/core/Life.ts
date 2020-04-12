@@ -1,6 +1,6 @@
 import { Creature, Ovule } from './Creature';
 
-export class Game {
+export class Life {
   private aliveCreatures: Set<Creature> = new Set();
 
   constructor() {}
