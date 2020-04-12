@@ -1,3 +1,4 @@
+import { nonNullable } from '../utils/nonNullable';
 import { Creature, Ovule } from './Creature';
 
 export class Life {
@@ -5,8 +6,16 @@ export class Life {
 
   constructor() {}
 
+  getAliveCreatures(): Creature[] {
+    return [...this.aliveCreatures.values()];
+  }
+
   getAliveCreaturesCount(): number {
     return this.aliveCreatures.size;
+  }
+
+  isAlive(creature: Creature): boolean {
+    return this.aliveCreatures.has(creature);
   }
 
   addCreature(creature: Creature): void {
@@ -14,9 +23,10 @@ export class Life {
   }
 
   tick(): void {
-    const deathCreatures = this.getDeathCreatures();
-    this.getNewCreatures().forEach((creature) => this.aliveCreatures.add(creature));
-    deathCreatures.forEach((creature) => this.aliveCreatures.delete(creature));
+    const newCreatureList = this.getNewCreatures();
+    const deathCreatureList = this.getDeathCreatures();
+    newCreatureList.forEach((creature) => this.aliveCreatures.add(creature));
+    deathCreatureList.forEach((creature) => this.aliveCreatures.delete(creature));
   }
 
   private getNewCreatures(): Creature[] {
@@ -26,18 +36,10 @@ export class Life {
   }
 
   private getOvules(): Ovule[] {
-    return this.getCreatures().flatMap((creature) => creature.getOvules?.() ?? []);
+    return this.getAliveCreatures().flatMap((creature) => creature.getOvules?.() ?? []);
   }
 
   private getDeathCreatures(): Creature[] {
-    return this.getCreatures().filter((creature) => creature.isReadyToDie());
+    return this.getAliveCreatures().filter((creature) => creature.isReadyToDie?.() ?? true);
   }
-
-  private getCreatures(): Creature[] {
-    return [...this.aliveCreatures.values()];
-  }
-}
-
-function nonNullable<T>(value: T): value is NonNullable<T> {
-  return value !== null && value !== undefined;
 }
