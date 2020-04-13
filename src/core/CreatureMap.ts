@@ -17,13 +17,9 @@ export class CreatureMap {
   getAlivePoints(): Point[] {
     return this.life
       .getCreatures()
-      .map((creature) => this.getPointOf(creature))
+      .map((creature) => this.creaturePointMap.get(creature))
       .filter(nonNullable)
       .sort((a, b) => a.compare(b));
-  }
-
-  private getPointOf(creature: Creature): Point | undefined {
-    return this.creaturePointMap.get(creature);
   }
 
   place(point: Point, creature: Creature): void {
@@ -34,7 +30,7 @@ export class CreatureMap {
   clearDeathCreaturePoints(): void {
     this.pointCreatureMap.clear();
     this.life.getCreatures().forEach((creature) => {
-      const point = this.getPointOf(creature);
+      const point = this.creaturePointMap.get(creature);
       if (point) {
         this.pointCreatureMap.set(point.serialize(), creature);
       }
