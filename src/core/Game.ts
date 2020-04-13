@@ -3,17 +3,17 @@ import { Creature } from './Creature';
 import { CreatureMap } from './CreatureMap';
 import { Life } from './Life';
 import { LivingCreature, LivingCreatureOvule } from './LivingCreature';
-import { PointMap } from './PointMap';
 import { ThreeParentOvule } from './ThreeParentOvule';
 
 export interface Point {
   getPointsAround(): Point[];
   compare(point: Point): number;
+  serialize(): string;
 }
 
 export class Game {
   private life = new Life();
-  private ovuleMap = new PointMap<LivingCreatureOvule>();
+  private ovuleMap = new Map<string, LivingCreatureOvule>();
   private creatureMap = new CreatureMap();
 
   fill(point: Point): void {
@@ -25,7 +25,7 @@ export class Game {
   private createCreature(point: Point): Creature {
     return new LivingCreature(
       { getAliveNeighborsCount: () => this.getAliveNeighborsCount(point) },
-      { getAvailableOvules: () => this.getOvules(point) },
+      { getAvailableOvules: () => this.getOvulesAround(point) },
     );
   }
 
@@ -41,18 +41,18 @@ export class Game {
     return false;
   }
 
-  private getOvules(point: Point): LivingCreatureOvule[] {
+  private getOvulesAround(point: Point): LivingCreatureOvule[] {
     return point
       .getPointsAround()
       .filter((p) => !this.isAliveCreatureAt(p))
-      .map((p) => this.getOvuleOrCreate(p));
+      .map((p) => this.getOvuleOrCreateAt(p));
   }
 
-  private getOvuleOrCreate(point: Point): LivingCreatureOvule {
-    if (!this.ovuleMap.get(point)) {
-      this.ovuleMap.set(point, this.createOvule(point));
+  private getOvuleOrCreateAt(point: Point): LivingCreatureOvule {
+    if (!this.ovuleMap.get(point.serialize())) {
+      this.ovuleMap.set(point.serialize(), this.createOvule(point));
     }
-    return this.ovuleMap.get(point) as LivingCreatureOvule;
+    return this.ovuleMap.get(point.serialize()) as LivingCreatureOvule;
   }
 
   private createOvule(point: Point): LivingCreatureOvule {

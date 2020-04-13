@@ -6,13 +6,7 @@ export class CreatureMap {
   private weakCache: WeakMap<Creature, Point> = new Map();
 
   getCreatureAt(point: Point): Creature | undefined {
-    return this.cache.get(this.getKey(point));
-  }
-
-  private getKey(point: Point): string {
-    return Object.entries(point)
-      .map((entry) => entry.join(':'))
-      .join(';');
+    return this.cache.get(point.serialize());
   }
 
   getPointOf(creature: Creature): Point | undefined {
@@ -20,7 +14,7 @@ export class CreatureMap {
   }
 
   set(point: Point, creature: Creature): void {
-    this.cache.set(this.getKey(point), creature);
+    this.cache.set(point.serialize(), creature);
     this.weakCache.set(creature, point);
   }
 
@@ -29,7 +23,7 @@ export class CreatureMap {
     creatures.forEach((creature) => {
       const point = this.getPointOf(creature);
       if (point) {
-        this.cache.set(this.getKey(point), creature);
+        this.cache.set(point.serialize(), creature);
       }
     });
   }

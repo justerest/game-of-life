@@ -1,4 +1,5 @@
 import { Point } from './Game';
+
 export class Point2D implements Point {
   x: number;
   y: number;
@@ -23,5 +24,9 @@ export class Point2D implements Point {
 
   compare(point: Point2D): number {
     return this.x - point.x || this.y - point.y;
+  }
+
+  serialize(): string {
+    return `x:${this.x};y:${this.y}`;
   }
 }
