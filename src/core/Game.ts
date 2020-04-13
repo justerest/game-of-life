@@ -1,7 +1,9 @@
-import { Board } from './Board';
+import { nonNullable } from 'src/utils/nonNullable';
 import { Creature } from './Creature';
+import { CreatureMap } from './CreatureMap';
 import { Life } from './Life';
 import { LivingCreature, LivingCreatureOvule } from './LivingCreature';
+import { PointMap } from './PointMap';
 import { ThreeParentOvule } from './ThreeParentOvule';
 
 export interface Point {
@@ -10,67 +12,32 @@ export interface Point {
 }
 
 export class Game {
-  private board = new Board(10, 10);
   private life = new Life();
   private ovuleMap = new PointMap<LivingCreatureOvule>();
+  private creatureMap = new CreatureMap();
 
-  fill({ x, y }: Point): void {
-    const creature = this.createCreature({ x, y });
+  fill(point: Point): void {
+    const creature = this.createCreature(point);
     this.life.addCreature(creature);
-    this.board.fillCell({ x, y, creature });
+    this.creatureMap.set(point, creature);
   }
 
-  private createCreature({ x, y }: Point): Creature {
+  private createCreature(point: Point): Creature {
     return new LivingCreature(
       {
-        getAliveNeighborsCount: () => this.getAliveNeighborsCount({ x, y }),
+        getAliveNeighborsCount: () => this.getAliveNeighborsCount(point),
       },
       {
-        getAvailableOvules: () => this.getOvules({ x, y }),
+        getAvailableOvules: () => this.getOvules(point),
       },
     );
   }
 
-  private getOvules({ x, y }: Point): LivingCreatureOvule[] {
-    return this.getPointAround({ x, y })
-      .filter((point) => !this.isAlivePoint(point))
-      .map((point) => this.getOvuleOrCreate(point));
+  private getAliveNeighborsCount(point: Point): number {
+    return this.getPointsAround(point).filter((p) => this.isAliveCreatureAt(p)).length;
   }
 
-  private getOvuleOrCreate(point: Point): LivingCreatureOvule {
-    if (!this.ovuleMap.get(point)) {
-      this.ovuleMap.set(
-        point,
-        new ThreeParentOvule({
-          create: () => {
-            const creature = this.createCreature({ x: point.x, y: point.y });
-            this.board.fillCell({ ...point, creature });
-            return creature;
-          },
-        }),
-      );
-    }
-    return this.ovuleMap.get(point) as LivingCreatureOvule;
-  }
-
-  getAlivePoints(): Point[] {
-    return this.board
-      .getCells()
-      .flat()
-      .filter((cell) => this.isAlivePoint(cell))
-      .map(({ x, y }) => ({ x, y }));
-  }
-
-  tick(): void {
-    this.life.tick();
-    this.ovuleMap.clear();
-  }
-
-  private getAliveNeighborsCount({ x, y }: Point): number {
-    return this.getPointAround({ x, y }).filter((point) => this.isAlivePoint(point)).length;
-  }
-
-  private getPointAround({ x, y }: Point): Point[] {
+  private getPointsAround({ x, y }: Point): Point[] {
     return [
       [x - 1, y - 1],
       [x - 1, y],
@@ -83,28 +50,45 @@ export class Game {
     ].map((coordinates) => ({ x: coordinates[0], y: coordinates[1] }));
   }
 
-  private isAlivePoint({ x, y }: Point): boolean {
-    const cell = this.board.getCells()[x]?.[y];
-    return !!cell?.creature && this.life.isAlive(cell.creature);
-  }
-}
-
-class PointMap<T> {
-  private cache: Map<string, T> = new Map();
-
-  get(point: Point): T | undefined {
-    return this.cache.get(this.getKey(point));
+  private isAliveCreatureAt(point: Point): boolean {
+    const creature = this.creatureMap.getCreatureAt(point);
+    if (!creature) return false;
+    return this.life.isAlive(creature);
   }
 
-  private getKey(point: Point): string {
-    return `x:${point.x};y:${point.y}`;
+  private getOvules(point: Point): LivingCreatureOvule[] {
+    return this.getPointsAround(point)
+      .filter((p) => !this.isAliveCreatureAt(p))
+      .map((p) => this.getOvuleOrCreate(p));
   }
 
-  set(point: Point, value: T): void {
-    this.cache.set(this.getKey(point), value);
+  private getOvuleOrCreate(point: Point): LivingCreatureOvule {
+    if (!this.ovuleMap.get(point)) {
+      this.ovuleMap.set(
+        point,
+        new ThreeParentOvule({
+          create: () => {
+            const creature = this.createCreature(point);
+            this.creatureMap.set(point, creature);
+            return creature;
+          },
+        }),
+      );
+    }
+    return this.ovuleMap.get(point) as LivingCreatureOvule;
   }
 
-  clear(): void {
-    this.cache.clear();
+  getAlivePoints(): Point[] {
+    return this.life
+      .getAliveCreatures()
+      .map((creature) => this.creatureMap.getPointOf(creature))
+      .filter(nonNullable)
+      .sort((a, b) => a.x - b.x || a.y - b.y);
+  }
+
+  tick(): void {
+    this.life.tick();
+    this.ovuleMap.clear();
+    this.creatureMap.removeAllOmit(this.life.getAliveCreatures());
   }
 }
