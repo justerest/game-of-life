@@ -28,20 +28,4 @@ describe('ThreeParentOvule', () => {
     ovule.handleBy({} as Creature);
     expect(ovule.getCreature()).toBeUndefined();
   });
-
-  it('+getCreature() should returns Creature once if handled 3 times', () => {
-    ovule.handleBy({} as Creature);
-    ovule.handleBy({} as Creature);
-    ovule.handleBy({} as Creature);
-    expect(ovule.getCreature()).not.toBeUndefined();
-    expect(ovule.getCreature()).toBeUndefined();
-  });
-
-  it('+getCreature() should returns undefined if handled 3 times but was called before', () => {
-    ovule.handleBy({} as Creature);
-    ovule.handleBy({} as Creature);
-    expect(ovule.getCreature()).toBeUndefined();
-    ovule.handleBy({} as Creature);
-    expect(ovule.getCreature()).toBeUndefined();
-  });
 });

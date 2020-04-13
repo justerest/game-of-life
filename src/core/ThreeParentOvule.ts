@@ -7,16 +7,17 @@ interface CreatureFactory {
 
 export class ThreeParentOvule implements LivingCreatureOvule {
   private parents: Set<Creature> = new Set();
+  private child: Creature;
 
-  constructor(private factory: CreatureFactory) {}
+  constructor(factory: CreatureFactory) {
+    this.child = factory.create();
+  }
 
   handleBy(creature: Creature): void {
     this.parents.add(creature);
   }
 
   getCreature(): Creature | undefined {
-    const parentsCount = this.parents.size;
-    this.parents.clear();
-    return parentsCount === 3 ? this.factory.create() : undefined;
+    return this.parents.size === 3 ? this.child : undefined;
   }
 }
