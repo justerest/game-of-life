@@ -1,29 +1,42 @@
+import { nonNullable } from 'src/utils/nonNullable';
 import { Creature } from './Creature';
 import { Point } from './Game';
+import { Life } from './Life';
 
 export class CreatureMap {
-  private cache: Map<string, Creature> = new Map();
-  private weakCache: WeakMap<Creature, Point> = new Map();
+  private pointCreatureMap: Map<string, Creature> = new Map();
+  private creaturePointMap: WeakMap<Creature, Point> = new Map();
 
-  getCreatureAt(point: Point): Creature | undefined {
-    return this.cache.get(point.serialize());
+  constructor(private life: Life) {}
+
+  hasAliveCreatureAt(point: Point): boolean {
+    const creature = this.pointCreatureMap.get(point.serialize());
+    return !!creature && this.life.has(creature);
   }
 
-  getPointOf(creature: Creature): Point | undefined {
-    return this.weakCache.get(creature);
+  getAlivePoints(): Point[] {
+    return this.life
+      .getCreatures()
+      .map((creature) => this.getPointOf(creature))
+      .filter(nonNullable)
+      .sort((a, b) => a.compare(b));
   }
 
-  set(point: Point, creature: Creature): void {
-    this.cache.set(point.serialize(), creature);
-    this.weakCache.set(creature, point);
+  private getPointOf(creature: Creature): Point | undefined {
+    return this.creaturePointMap.get(creature);
   }
 
-  reset(creatures: Creature[]): void {
-    this.cache.clear();
-    creatures.forEach((creature) => {
+  place(point: Point, creature: Creature): void {
+    this.pointCreatureMap.set(point.serialize(), creature);
+    this.creaturePointMap.set(creature, point);
+  }
+
+  clearDeathCreaturePoints(): void {
+    this.pointCreatureMap.clear();
+    this.life.getCreatures().forEach((creature) => {
       const point = this.getPointOf(creature);
       if (point) {
-        this.cache.set(point.serialize(), creature);
+        this.pointCreatureMap.set(point.serialize(), creature);
       }
     });
   }

@@ -14,12 +14,12 @@ export interface Point {
 export class Game {
   private life = new Life();
   private ovuleMap = new Map<string, LivingCreatureOvule>();
-  private creatureMap = new CreatureMap();
+  private creatureMap = new CreatureMap(this.life);
 
   fill(point: Point): void {
     const creature = this.createCreature(point);
     this.life.addCreature(creature);
-    this.creatureMap.set(point, creature);
+    this.creatureMap.place(point, creature);
   }
 
   private createCreature(point: Point): Creature {
@@ -34,11 +34,7 @@ export class Game {
   }
 
   private isAliveCreatureAt(point: Point): boolean {
-    const creature = this.creatureMap.getCreatureAt(point);
-    if (creature) {
-      return this.life.has(creature);
-    }
-    return false;
+    return this.creatureMap.hasAliveCreatureAt(point);
   }
 
   private getOvulesAround(point: Point): LivingCreatureOvule[] {
@@ -59,23 +55,19 @@ export class Game {
     return new ThreeParentOvule({
       create: () => {
         const creature = this.createCreature(point);
-        this.creatureMap.set(point, creature);
+        this.creatureMap.place(point, creature);
         return creature;
       },
     });
   }
 
   getAlivePoints(): Point[] {
-    return this.life
-      .getCreatures()
-      .map((creature) => this.creatureMap.getPointOf(creature))
-      .filter(nonNullable)
-      .sort((a, b) => a.compare(b));
+    return this.creatureMap.getAlivePoints();
   }
 
   tick(): void {
     this.life.tick();
     this.ovuleMap.clear();
-    this.creatureMap.reset(this.life.getCreatures());
+    this.creatureMap.clearDeathCreaturePoints();
   }
 }
