@@ -6,15 +6,15 @@ export class Life {
 
   constructor() {}
 
-  getAliveCreatures(): Creature[] {
+  getCreatures(): Creature[] {
     return [...this.aliveCreatures.values()];
   }
 
-  getAliveCreaturesCount(): number {
+  getCreaturesCount(): number {
     return this.aliveCreatures.size;
   }
 
-  isAlive(creature: Creature): boolean {
+  has(creature: Creature): boolean {
     return this.aliveCreatures.has(creature);
   }
 
@@ -36,10 +36,10 @@ export class Life {
   }
 
   private getOvules(): Ovule[] {
-    return this.getAliveCreatures().flatMap((creature) => creature.getOvules?.() ?? []);
+    return this.getCreatures().flatMap((creature) => creature.getOvules?.() ?? []);
   }
 
   private getDeathCreatures(): Creature[] {
-    return this.getAliveCreatures().filter((creature) => creature.isReadyToDie?.() ?? true);
+    return this.getCreatures().filter((creature) => creature.isReadyToDie?.() ?? true);
   }
 }

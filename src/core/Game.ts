@@ -24,12 +24,8 @@ export class Game {
 
   private createCreature(point: Point): Creature {
     return new LivingCreature(
-      {
-        getAliveNeighborsCount: () => this.getAliveNeighborsCount(point),
-      },
-      {
-        getAvailableOvules: () => this.getOvules(point),
-      },
+      { getAliveNeighborsCount: () => this.getAliveNeighborsCount(point) },
+      { getAvailableOvules: () => this.getOvules(point) },
     );
   }
 
@@ -39,8 +35,10 @@ export class Game {
 
   private isAliveCreatureAt(point: Point): boolean {
     const creature = this.creatureMap.getCreatureAt(point);
-    if (!creature) return false;
-    return this.life.isAlive(creature);
+    if (creature) {
+      return this.life.has(creature);
+    }
+    return false;
   }
 
   private getOvules(point: Point): LivingCreatureOvule[] {
@@ -52,23 +50,24 @@ export class Game {
 
   private getOvuleOrCreate(point: Point): LivingCreatureOvule {
     if (!this.ovuleMap.get(point)) {
-      this.ovuleMap.set(
-        point,
-        new ThreeParentOvule({
-          create: () => {
-            const creature = this.createCreature(point);
-            this.creatureMap.set(point, creature);
-            return creature;
-          },
-        }),
-      );
+      this.ovuleMap.set(point, this.createOvule(point));
     }
     return this.ovuleMap.get(point) as LivingCreatureOvule;
   }
 
+  private createOvule(point: Point): LivingCreatureOvule {
+    return new ThreeParentOvule({
+      create: () => {
+        const creature = this.createCreature(point);
+        this.creatureMap.set(point, creature);
+        return creature;
+      },
+    });
+  }
+
   getAlivePoints(): Point[] {
     return this.life
-      .getAliveCreatures()
+      .getCreatures()
       .map((creature) => this.creatureMap.getPointOf(creature))
       .filter(nonNullable)
       .sort((a, b) => a.compare(b));
@@ -77,6 +76,6 @@ export class Game {
   tick(): void {
     this.life.tick();
     this.ovuleMap.clear();
-    this.creatureMap.reset(this.life.getAliveCreatures());
+    this.creatureMap.reset(this.life.getCreatures());
   }
 }
