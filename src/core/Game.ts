@@ -7,8 +7,8 @@ import { PointMap } from './PointMap';
 import { ThreeParentOvule } from './ThreeParentOvule';
 
 export interface Point {
-  x: number;
-  y: number;
+  getPointsAround(): Point[];
+  compare(point: Point): number;
 }
 
 export class Game {
@@ -34,20 +34,7 @@ export class Game {
   }
 
   private getAliveNeighborsCount(point: Point): number {
-    return this.getPointsAround(point).filter((p) => this.isAliveCreatureAt(p)).length;
-  }
-
-  private getPointsAround({ x, y }: Point): Point[] {
-    return [
-      [x - 1, y - 1],
-      [x - 1, y],
-      [x - 1, y + 1],
-      [x, y - 1],
-      [x, y + 1],
-      [x + 1, y - 1],
-      [x + 1, y],
-      [x + 1, y + 1],
-    ].map((coordinates) => ({ x: coordinates[0], y: coordinates[1] }));
+    return point.getPointsAround().filter((p) => this.isAliveCreatureAt(p)).length;
   }
 
   private isAliveCreatureAt(point: Point): boolean {
@@ -57,7 +44,8 @@ export class Game {
   }
 
   private getOvules(point: Point): LivingCreatureOvule[] {
-    return this.getPointsAround(point)
+    return point
+      .getPointsAround()
       .filter((p) => !this.isAliveCreatureAt(p))
       .map((p) => this.getOvuleOrCreate(p));
   }
@@ -83,12 +71,12 @@ export class Game {
       .getAliveCreatures()
       .map((creature) => this.creatureMap.getPointOf(creature))
       .filter(nonNullable)
-      .sort((a, b) => a.x - b.x || a.y - b.y);
+      .sort((a, b) => a.compare(b));
   }
 
   tick(): void {
     this.life.tick();
     this.ovuleMap.clear();
-    this.creatureMap.removeAllOmit(this.life.getAliveCreatures());
+    this.creatureMap.reset(this.life.getAliveCreatures());
   }
 }

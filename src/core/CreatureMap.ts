@@ -10,7 +10,9 @@ export class CreatureMap {
   }
 
   private getKey(point: Point): string {
-    return `x:${point.x};y:${point.y}`;
+    return Object.entries(point)
+      .map((entry) => entry.join(':'))
+      .join(';');
   }
 
   getPointOf(creature: Creature): Point | undefined {
@@ -22,7 +24,7 @@ export class CreatureMap {
     this.weakCache.set(creature, point);
   }
 
-  removeAllOmit(creatures: Creature[]): void {
+  reset(creatures: Creature[]): void {
     this.cache.clear();
     creatures.forEach((creature) => {
       const point = this.getPointOf(creature);
